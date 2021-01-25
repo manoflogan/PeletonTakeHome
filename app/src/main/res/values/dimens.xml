@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="standardMargin">8dp</dimen>
+    <dimen name="standardMargin2x">16dp</dimen>
+
+    <dimen name="placeholder_image_width">60dp</dimen>
+    <dimen name="placeholder_image_height">60dp</dimen>
+
+    <dimen name="placeholder_view_height">16dp</dimen>
+    <dimen name="placeholder_view_width">50dp</dimen>
+    <dimen name="placeholder_view_width2x">100dp</dimen>
+</resources>
