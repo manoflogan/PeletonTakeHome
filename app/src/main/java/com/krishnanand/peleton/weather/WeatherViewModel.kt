@@ -17,10 +17,8 @@ import javax.inject.Inject
 
 
 class WeatherViewModel @Inject constructor(
-    private val retrofit: Retrofit
+    private val weatherApiService: WeatherApiService
 ): ViewModel() {
-
-    val weatherApiService = retrofit.create(WeatherApiService::class.java)
 
     private val _locationLiveData: MutableLiveData<Location>  = MutableLiveData<Location>()
 
