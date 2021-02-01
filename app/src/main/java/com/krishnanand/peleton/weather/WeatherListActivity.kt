@@ -3,13 +3,16 @@ package com.krishnanand.peleton.weather
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import androidx.activity.viewModels
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.facebook.shimmer.ShimmerFrameLayout
 import com.krishnanand.peleton.R
 import com.krishnanand.peleton.databinding.WeatherItemBinding
 import dagger.android.AndroidInjection
@@ -33,20 +36,54 @@ class WeatherListActivity : AppCompatActivity(), HasAndroidInjector {
         viewModelFactory
     }
 
+    private val shimmerContainer: ShimmerFrameLayout by lazy {
+        findViewById(R.id.shimmer_container)
+    }
+
+    private val emptyView: View by lazy {
+        findViewById(R.id.empty_view)
+    }
+
+    private val emptyViewButton: Button by lazy {
+        emptyView.findViewById(R.id.empty_view_button)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         AndroidInjection.inject(this)
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        setContentView(R.layout.activity_weather_list)
+        setTitle(R.string.weather_report)
         val weatherListAdapter = WeatherListAdapter(weatherViewModel)
         weatherViewModel.consolidatedWeather.observe(this, {
-            it.consolidatedWeather.sortedBy { weather: Weather -> weather.applicableDate }
-            weatherListAdapter.setWeatherItems(it.consolidatedWeather)
-            weatherListAdapter.notifyDataSetChanged()
+            consolidatedWeather: ConsolidatedWeather? ->
+            with(shimmerContainer) {
+                stopShimmer()
+                visibility = View.GONE
+            }
+            if (consolidatedWeather != null) {
+                consolidatedWeather.consolidatedWeather.sortedBy { weather: Weather -> weather.applicableDate }
+                weatherListAdapter.setWeatherItems(consolidatedWeather.consolidatedWeather)
+                weatherListAdapter.notifyDataSetChanged()
+                emptyView.visibility = View.GONE
+            } else {
+                recyclerView.visibility = View.GONE
+                emptyView.visibility = View.VISIBLE
+                initRetryClick()
+            }
         })
         weatherViewModel.locationLiveData.observe(this,  {
-            weatherViewModel.fetchConsolidatedWeather(it.woeId)
+            location: Location? ->
+            if (location != null) {
+                weatherViewModel.fetchConsolidatedWeather(location.woeId)
+            } else {
+                with(shimmerContainer) {
+                    stopShimmer()
+                    visibility = View.GONE
+                }
+                emptyView.visibility = View.VISIBLE
+                initRetryClick()
+            }
         })
-        weatherViewModel.fetchLocationData("new york")
         with(recyclerView) {
             val linearLayoutManager = LinearLayoutManager(this@WeatherListActivity)
             layoutManager = linearLayoutManager
@@ -54,9 +91,22 @@ class WeatherListActivity : AppCompatActivity(), HasAndroidInjector {
             setHasFixedSize(true)
             addItemDecoration(DividerItemDecoration(recyclerView.context, linearLayoutManager.orientation))
         }
+        shimmerContainer.startShimmer()
+        fetchLocationData()
     }
 
     override fun androidInjector(): AndroidInjector<Any> = dispatchingAndroidInjector
+
+    private fun fetchLocationData() {
+        weatherViewModel.fetchLocationData("new york")
+    }
+
+    private fun initRetryClick() {
+        // Retry behaviour.
+        emptyViewButton.setOnClickListener({
+            fetchLocationData()
+        })
+    }
 }
 
 internal class WeatherViewHolder(private val weatherItemBinding: WeatherItemBinding): RecyclerView.ViewHolder(weatherItemBinding.root) {
@@ -72,7 +122,10 @@ internal class WeatherListAdapter(private val weatherViewModel: WeatherViewModel
     private val weatherList: MutableList<Weather> = mutableListOf()
 
     fun setWeatherItems(weatherList: List<Weather>) {
-        this.weatherList.addAll(weatherList)
+        with(this.weatherList) {
+            clear()
+            addAll(weatherList)
+        }
     }
 
     override fun getItemCount(): Int = weatherList.size

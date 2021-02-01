@@ -1,6 +1,9 @@
 <resources>
     <string name="app_name">Peleton</string>
+    <string name="weather_report">Weather Report</string>
+    <string name="weather_report_error_string">No weather report</string>
     <string name="today_string">Today</string>
     <string name="max_temp_string">Max Temperature</string>
     <string name="min_temp_string">Min Temperature</string>
+    <string name="retry_string">Retry!</string>
 </resources>

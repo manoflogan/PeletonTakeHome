@@ -41,7 +41,6 @@ class WeatherViewModel @Inject constructor(
                 }
 
                 override fun onFailure(call: Call<List<Location>>, t: Throwable) {
-                    t.printStackTrace()
                     _locationLiveData.value = null
                 }
             });
